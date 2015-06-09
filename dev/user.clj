@@ -11,5 +11,7 @@
    [clojure.string :as str]
    [clojure.test :as test]
    [clojure.tools.namespace.repl :refer [refresh refresh-all]]
+   [durable-queue :as q]
    [event]))
 
+(def command-queue (q/queues "/tmp" {}))

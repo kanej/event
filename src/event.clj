@@ -9,7 +9,7 @@
   StateMachine
   (process-command [this aggregate command]
     (when-let [dispatch-fn (get-in this [:dispatchers (:action command)])]
-        {:aggregate (dispatch-fn aggregate (:data command))})))
+        (dispatch-fn aggregate (:data command)))))
 
 (defprotocol EventProcessor
   (apply-command [this command]))
@@ -18,5 +18,6 @@
   EventProcessor
   (apply-command [this {:keys [aggregate-type aggregate-id] :as command}]
     (if-let [aggregate (get-in this [:aggregate-store aggregate-type aggregate-id])]
-      (process-command (:state-machine this) aggregate command)
+      (let [updated-aggregate (process-command (:state-machine this) aggregate command)]
+        {:aggregate updated-aggregate :events []})
       {:aggregate nil})))
