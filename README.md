@@ -43,6 +43,6 @@ TODO
 
 ## Copyright and License
 
-Copyright © 2015 TODO_INSERT_NAME
+Copyright © 2015 John Kane
 
 TODO: [Choose a license](http://choosealicense.com/)
