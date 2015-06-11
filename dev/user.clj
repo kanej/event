@@ -14,6 +14,7 @@
    [durable-queue :as q :refer [take! put! complete!]]
    [event]
    [event-tests :as evtests]
+   [event-store :as store :refer [commit]]
    [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]))
 
 (def command-queue (q/queues "/tmp" {}))
@@ -22,6 +23,8 @@
 
 (def event-queue (q/queues "/tmp" {}))
 
+(def event-store (store/psql-event-store nil))
+
 (go-loop []
   (let [message (take! command-queue :command)]
     (>! command-channel message)
@@ -29,6 +32,7 @@
 
 (go-loop []
   (let [message (<! command-channel)]
+    (commit event-store message)
     (complete! message)
     (recur)))
 
