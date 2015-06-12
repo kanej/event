@@ -15,6 +15,8 @@
    [event]
    [event-tests :as evtests]
    [event-store :as store :refer [commit]]
+   [psql.schema :as schema]
+   [psql.db :as db]
    [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]))
 
 (def command-queue (q/queues "/tmp" {}))
@@ -41,3 +43,8 @@
 
 (defn event-stats []
   (q/stats event-queue))
+
+(defn commit-course-event [data]
+  (db/commit-event {:aggregate-type "course" :aggregate-id (java.util.UUID/randomUUID) :data data}))
+
+;;(commit-course-event {:title "Ancient Philosophy"})
