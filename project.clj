@@ -12,5 +12,10 @@
                  [hikari-cp "0.13.0"]
                  [yesql "0.4.0"]
                  [clj-liquibase "0.5.2"]]
-  :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.7"]]
-                   :source-paths ["dev" "test"]}})
+  :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.7"]
+                                  [lein-light-nrepl "0.1.0"]]
+                   :source-paths ["dev" "test"]
+                   :plugins [
+                             [cider/cider-nrepl "0.9.0-SNAPSHOT"]
+                             [refactor-nrepl "1.0.5"]]
+                   :repl-options {:nrepl-middleware [lighttable.nrepl.handler/lighttable-ops]}}})

@@ -1,23 +1,23 @@
 (ns user
-  "Tools for interactive development with the REPL. This file should
-  not be included in a production build of the application."
-  (:require
-   [clojure.java.io :as io]
-   [clojure.java.javadoc :refer [javadoc]]
-   [clojure.pprint :refer [pprint]]
-   [clojure.reflect :refer [reflect]]
-   [clojure.repl :refer [apropos dir doc find-doc pst source]]
-   [clojure.set :as set]
-   [clojure.string :as str]
-   [clojure.test :as test]
-   [clojure.tools.namespace.repl :refer [refresh refresh-all]]
-   [durable-queue :as q :refer [take! put! complete!]]
-   [event]
-   [event-tests :as evtests]
-   [event-store :as store :refer [commit]]
-   [psql.schema :as schema]
-   [psql.db :as db]
-   [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]))
+  (:require [clojure.java.io :as io]
+            [clojure.java.javadoc :refer [javadoc]]
+            [clojure.pprint :refer [pprint]]
+            [clojure.reflect :refer [reflect]]
+            [clojure.repl :refer [apropos dir doc find-doc pst source]]
+            [clojure.set :as set]
+            [clojure.string :as str]
+            [clojure.test :as test]
+            [clojure.tools.namespace.repl :refer [refresh refresh-all]]
+            [durable-queue :as q :refer [take! put! complete!]]
+            [event]
+            [event-tests :as evtests]
+            [event-store :refer [commit]]
+            [psql.event-store :as psql]
+            [psql.schema :as schema]
+            [psql.db :as db]
+            [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]))
+
+(def datasource (schema/make-postgres-datasource))
 
 (def command-queue (q/queues "/tmp" {}))
 
@@ -25,7 +25,7 @@
 
 (def event-queue (q/queues "/tmp" {}))
 
-(def event-store (store/psql-event-store nil))
+(def event-store (psql/psql-event-store datasource))
 
 (go-loop []
   (let [message (take! command-queue :command)]
@@ -34,7 +34,7 @@
 
 (go-loop []
   (let [message (<! command-channel)]
-    (commit event-store message)
+    (commit event-store @message)
     (complete! message)
     (recur)))
 
@@ -45,6 +45,7 @@
   (q/stats event-queue))
 
 (defn commit-course-event [data]
-  (db/commit-event {:aggregate-type "course" :aggregate-id (java.util.UUID/randomUUID) :data data}))
+  (let [command {:aggregate-type "course" :aggregate-id (java.util.UUID/randomUUID) :data data}]
+    (put! command-queue :command command)))
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
