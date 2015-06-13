@@ -17,7 +17,7 @@
             [psql.db :as db]
             [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]))
 
-(def datasource (schema/make-postgres-datasource))
+(def ds (schema/make-postgres-datasource))
 
 (def command-queue (q/queues "/tmp" {}))
 
@@ -25,7 +25,7 @@
 
 (def event-queue (q/queues "/tmp" {}))
 
-(def event-store (psql/psql-event-store datasource))
+(def event-store (psql/psql-event-store ds))
 
 (go-loop []
   (let [message (take! command-queue :command)]
@@ -44,8 +44,15 @@
 (defn event-stats []
   (q/stats event-queue))
 
+;; Helpers
+
+(def aid (java.util.UUID/randomUUID))
+
 (defn commit-course-event [data]
-  (let [command {:aggregate-type "course" :aggregate-id (java.util.UUID/randomUUID) :data data}]
+  (let [command {:aggregate-type "course" :aggregate-id aid :data data}]
     (put! command-queue :command command)))
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
+
+(defn get-events []
+  (db/get-events-for-aggregate {:datasource ds} "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
