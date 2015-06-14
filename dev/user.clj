@@ -11,7 +11,7 @@
             [durable-queue :as q :refer [take! put! complete!]]
             [event]
             [event-tests :as evtests]
-            [event-store :refer [commit]]
+            [event-store :refer [commit get-events]]
             [psql.event-store :as psql]
             [psql.schema :as schema]
             [psql.db :as db]
@@ -54,5 +54,5 @@
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
 
-(defn get-events []
-  (db/get-events-for-aggregate {:datasource ds} "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
+(defn show-events []
+  (get-events event-store "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
