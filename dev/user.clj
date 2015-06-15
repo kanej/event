@@ -8,6 +8,7 @@
             [clojure.string :as str]
             [clojure.test :as test]
             [clojure.tools.namespace.repl :refer [refresh refresh-all]]
+            [reloaded.repl :refer [system init start stop go reset]]
             [durable-queue :as q :refer [take! put! complete!]]
             [event]
             [event-tests :as evtests]
@@ -15,34 +16,37 @@
             [psql.event-store :as psql]
             [psql.schema :as schema]
             [psql.db :as db]
-            [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]))
+            ;;[clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]
+            [system :refer [event-system]]))
 
-(def ds (schema/make-postgres-datasource))
+;;(def ds (schema/make-postgres-datasource))
 
 (def command-queue (q/queues "/tmp" {}))
 
-(def command-channel (chan))
+;;(def command-channel (chan))
 
 (def event-queue (q/queues "/tmp" {}))
 
-(def event-store (psql/psql-event-store ds))
+;;(def event-store (psql/psql-event-store ds))
 
-(go-loop []
-  (let [message (take! command-queue :command)]
-    (>! command-channel message)
-    (recur)))
+;; (go-loop []
+;;   (let [message (take! command-queue :command)]
+;;     (>! command-channel message)
+;;     (recur)))
 
-(go-loop []
-  (let [message (<! command-channel)]
-    (commit event-store @message)
-    (complete! message)
-    (recur)))
+;; (go-loop []
+;;   (let [message (<! command-channel)]
+;;     (commit event-store @message)
+;;     (complete! message)
+;;     (recur)))
 
 (defn command-stats []
   (q/stats command-queue))
 
 (defn event-stats []
   (q/stats event-queue))
+
+(reloaded.repl/set-init! #(event-system {}))
 
 ;; Helpers
 
@@ -54,5 +58,5 @@
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
 
-(defn show-events []
-  (get-events event-store "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
+;; (defn show-events []
+;;   (get-events event-store "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
