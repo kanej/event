@@ -58,5 +58,5 @@
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
 
-;; (defn show-events []
-;;   (get-events event-store "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
+(defn show-events []
+  (get-events (:es (:es system)) "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
