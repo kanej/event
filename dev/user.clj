@@ -16,35 +16,7 @@
             [psql.event-store :as psql]
             [psql.schema :as schema]
             [psql.db :as db]
-            ;;[clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan]]
             [system :refer [event-system]]))
-
-;;(def ds (schema/make-postgres-datasource))
-
-(def command-queue (q/queues "/tmp" {}))
-
-;;(def command-channel (chan))
-
-(def event-queue (q/queues "/tmp" {}))
-
-;;(def event-store (psql/psql-event-store ds))
-
-;; (go-loop []
-;;   (let [message (take! command-queue :command)]
-;;     (>! command-channel message)
-;;     (recur)))
-
-;; (go-loop []
-;;   (let [message (<! command-channel)]
-;;     (commit event-store @message)
-;;     (complete! message)
-;;     (recur)))
-
-(defn command-stats []
-  (q/stats command-queue))
-
-(defn event-stats []
-  (q/stats event-queue))
 
 (reloaded.repl/set-init! #(event-system {}))
 
@@ -53,10 +25,11 @@
 (def aid (java.util.UUID/randomUUID))
 
 (defn commit-course-event [data]
-  (let [command {:aggregate-type "course" :aggregate-id aid :data data}]
+  (let [command {:aggregate-type "course" :aggregate-id aid :data data}
+        command-queue (-> system :command-queue :queue) ]
     (put! command-queue :command command)))
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
 
 (defn show-events []
-  (get-events (:es (:es system)) "a95e33c5-2d96-4132-b92b-7488f235fb5d"))
+  (get-events (:es (:es system)) "c90a4775-3e2b-4a8d-bf98-255ace3534b6"))
