@@ -23,7 +23,7 @@
 
 ;; Helpers
 
-(def aid (java.util.UUID/randomUUID))
+(def aid (java.util.UUID/fromString "d7cf3e35-05b1-42a6-8016-d5a82cb7b394"))
 
 (defn commit-course-event [data]
   (let [command {:aggregate-type "course" :aggregate-id aid :data data}
