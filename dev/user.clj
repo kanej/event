@@ -16,7 +16,8 @@
             [psql.event-store :as psql]
             [psql.schema :as schema]
             [psql.db :as db]
-            [system :refer [event-system]]))
+            [system :refer [event-system]]
+            [lillith :refer [get-aggregate dispatch-command]]))
 
 (reloaded.repl/set-init! #(event-system {}))
 
@@ -26,10 +27,10 @@
 
 (defn commit-course-event [data]
   (let [command {:aggregate-type "course" :aggregate-id aid :data data}
-        command-queue (-> system :command-queue :queue) ]
-    (put! command-queue :command command)))
+        lilith (-> system :lilith :lilith)]
+    (dispatch-command lilith command)))
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
 
-(defn show-events []
-  (get-events (:es (:es system)) "c90a4775-3e2b-4a8d-bf98-255ace3534b6"))
+(defn show-events [aggregate-id]
+  (get-aggregate (-> system :lilith :lilith) aggregate-id))

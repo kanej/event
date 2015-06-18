@@ -5,6 +5,7 @@
             [psql.event-store :as psql]
             [durable-queue :as q :refer [take! put! complete!]]
             [event-store :refer [commit get-events]]
+            [lillith :as l]
 
             [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan close! alts!!]]
             [meta-merge.core :refer [meta-merge]]
@@ -42,43 +43,22 @@
 
   (start [component]
     (let [es (psql/->postgres-event-store (:ds ds))]
-      (assoc component :es es)))
+      (assoc component :event-store es)))
 
   (stop [component]
-    (assoc component :es nil)))
+    (assoc component :event-store nil)))
 
 
-(defn first-loop [command-queue command-channel]
-  (go-loop []
-           (when-let [message (take! (:queue command-queue) :command)]
-             (>! command-channel message)
-             (recur))))
-
-(defn second-loop [command-channel event-store]
-  (go-loop []
-           (when-let [message (<! command-channel)]
-             (println message)
-             (commit event-store @message)
-             (complete! message)
-             (recur))))
-
-(defrecord lillith [command-queue es command-channel l1 l2]
+(defrecord lilith-component [command-queue event-store]
   component/Lifecycle
 
   (start [component]
-    (let [command-channel (chan)
-
-          l1 (first-loop command-queue command-channel)
-
-          l2 (second-loop command-channel (:es es))]
-
-      (merge component {:command-channel command-channel :l1 l1 :l2 l2})))
+    (let [lilith (l/init-lilith (:queue command-queue) (:event-store event-store))]
+      (assoc component :lilith lilith)))
 
   (stop [component]
-    (close! command-channel)
-    (close! l1)
-    (close! l2)
-    (merge component {:command-channel nil :l1 nil :l2 nil})))
+    (l/stop-lilith (:lilith component))
+    (assoc component :lilith nil)))
 
 
 (def base-config
@@ -94,10 +74,10 @@
     (-> (component/system-map
          :command-queue (->command-queue (:command-queue config))
          :ds (->datasource (:ds config))
-         :es (map->event-store {})
-         :lillith (map->lillith {})
+         :event-store (map->event-store {})
+         :lilith (map->lilith-component {})
          )
         (component/system-using
-         {:es [:ds]
-          :lillith [:command-queue :es]})
+         {:event-store [:ds]
+          :lilith [:command-queue :event-store]})
         )))
