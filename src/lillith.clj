@@ -1,7 +1,9 @@
 (ns lillith
   (:require [durable-queue :as q :refer [take! put! complete!]]
             [event-store :refer [commit get-events]]
-            [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan close! alts!!]]))
+            [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan close! alts!!]]
+            [event :refer [apply-command map->event-machine map->state-machine process-command]]
+            ))
 
 (defprotocol EventSourcingSystem
   (dispatch-command [this command])
@@ -34,7 +36,8 @@
 (defn init-lilith [command-queue event-store]
   (let [command-channel (chan)
         l1 (first-loop command-queue command-channel)
-        l2 (second-loop command-channel event-store)]
+        l2 (second-loop command-channel event-store)
+        sm (map->state-machine {:dispatchers {:init identity}})]
     (->lilith command-queue event-store command-channel l1 l2)))
 
 (defn stop-lilith [{:keys [command-queue event-store command-channel l1 l2] :as lilith}]
