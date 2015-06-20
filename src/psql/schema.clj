@@ -42,6 +42,7 @@
     [[:id             :int           :null false :pk true :autoinc true]
      [:aggregate-type [:varchar 150] :null false]
      [:aggregate-id   :uuid          :null false]
+     [:action         [:varchar 100] :null false]
      [:data           [:varchar 500] :null false]]))
 
 (defchangelog

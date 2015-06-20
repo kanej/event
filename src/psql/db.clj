@@ -8,6 +8,6 @@
 
 (defquery get-events-for-aggregate "queries/get_events_for_aggregate.sql")
 
-(defn commit-event [ds {:keys [aggregate-type aggregate-id data] :as event}]
+(defn commit-event [ds {:keys [aggregate-type aggregate-id action data] :as event}]
   (jdbc/with-db-transaction [connection {:datasource ds}]
-    (commit-event<! connection aggregate-type aggregate-id (prn-str data))))
+    (commit-event<! connection (name aggregate-type) aggregate-id (name action) (prn-str data))))
