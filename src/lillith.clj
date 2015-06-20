@@ -9,7 +9,7 @@
   (dispatch-command [this command])
   (get-aggregate [this aggregate-id]))
 
-(defrecord lilith [command-queue event-store command-channel l1 l2]
+(defrecord lilith [command-queue event-store command-channel l1 l2 state-machine]
   EventSourcingSystem
 
   (dispatch-command [this command]
@@ -38,9 +38,14 @@
         l1 (first-loop command-queue command-channel)
         l2 (second-loop command-channel event-store)
         sm (map->state-machine {:dispatchers {:init identity}})]
-    (->lilith command-queue event-store command-channel l1 l2)))
+    (map->lilith {:command-queue command-queue
+                  :event-store event-store
+                  :command-channel command-channel
+                  :l1 l1
+                  :l2 l2
+                  :state-machine sm})))
 
-(defn stop-lilith [{:keys [command-queue event-store command-channel l1 l2] :as lilith}]
+(defn stop-lilith [{:keys [command-queue event-store command-channel l1 l2 state-machine] :as lilith}]
   (close! command-channel)
   (close! l1)
   (close! l2)
