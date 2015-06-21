@@ -1,6 +1,6 @@
 (ns event-tests
   (:require [clojure.test :refer :all]
-            [event :refer [apply-command map->event-machine map->state-machine process-command]])
+            [event :refer [apply-command map->event-machine map->state-machine process-event]])
   (:import [event event-machine]))
 
 (defn create-quiz [entity data]
@@ -43,5 +43,5 @@
                   {:id 4 :aggregate-type :quiz :aggregate-id aid :action :answer   :data {:answer 3 :value 1}}
                   {:id 5 :aggregate-type :quiz :aggregate-id aid :action :answer   :data {:answer 4 :value 1}}
                   {:id 6 :aggregate-type :quiz :aggregate-id aid :action :complete :data nil}]
-        aggregate (reduce #(process-command quiz-state-machine %1 %2) {:id 1} commands)]
+        aggregate (reduce #(process-event quiz-state-machine %1 %2) {:id aid} commands)]
     (is (= [1 1 1 1 1] (:answers aggregate)))))

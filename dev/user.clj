@@ -19,7 +19,20 @@
             [system :refer [event-system]]
             [lillith :refer [get-aggregate dispatch-command]]))
 
-(reloaded.repl/set-init! #(event-system {}))
+(defn create-quiz [entity data]
+  (merge entity {:answers [0 0 0 0 0 ]}))
+
+(defn update-answer [quiz {:keys [answer value]}]
+  (assoc-in quiz [:answers answer] value))
+
+(defn complete-quiz [quiz data]
+  (assoc quiz :status :complete))
+
+(def quiz-config {:dispatchers {:init create-quiz
+                                :answer update-answer
+                                :complete complete-quiz}})
+
+(reloaded.repl/set-init! #(event-system {:state-machine quiz-config}))
 
 ;; Example data
 
@@ -49,5 +62,5 @@
 
 ;;(commit-course-event {:title "Ancient Philosophy"})
 
-(defn show-events [aggregate-id]
+(defn show-aggregate [aggregate-id]
   (get-aggregate (-> system :lilith :lilith) aggregate-id))

@@ -5,13 +5,13 @@
             [psql.event-store :as psql]
             [durable-queue :as q :refer [take! put! complete!]]
             [event-store :refer [commit get-events]]
+            [event :refer [map->state-machine]]
             [lillith :as l]
 
             [clojure.core.async :as a :refer [>! <! >!! <!! go go-loop chan close! alts!!]]
             [meta-merge.core :refer [meta-merge]]
             [clojure.pprint :refer [pprint]])
-  (:import [psql.event_store postgres-event-store])
-  )
+  (:import [psql.event_store postgres-event-store]))
 
 (defrecord command-queue [config]
   component/Lifecycle
@@ -49,17 +49,19 @@
     (assoc component :event-store nil)))
 
 
-(defrecord lilith-component [command-queue event-store]
+(def quiz-dispatchers {:init identity})
+
+(defrecord lilith-component [config command-queue event-store]
   component/Lifecycle
 
   (start [component]
-    (let [lilith (l/init-lilith (:queue command-queue) (:event-store event-store))]
+    (let [state-machine (map->state-machine (:state-machine config))
+          lilith (l/init-lilith (:queue command-queue) (:event-store event-store) state-machine)]
       (assoc component :lilith lilith)))
 
   (stop [component]
     (l/stop-lilith (:lilith component))
     (assoc component :lilith nil)))
-
 
 (def base-config
   {:ds {:server-name "localhost"
@@ -67,7 +69,8 @@
         :database-name "eventstore"
         :username "eve"
         :password "eve"}
-   :command-queue {:dir "/tmp"}})
+   :command-queue {:dir "/tmp"}
+   :state-machine {:dispatchers nil}})
 
 (defn event-system [config]
   (let [config (meta-merge base-config config)]
@@ -75,9 +78,7 @@
          :command-queue (->command-queue (:command-queue config))
          :ds (->datasource (:ds config))
          :event-store (map->event-store {})
-         :lilith (map->lilith-component {})
-         )
+         :lilith (map->lilith-component {:config {:state-machine (:state-machine config)}}))
         (component/system-using
          {:event-store [:ds]
-          :lilith [:command-queue :event-store]})
-        )))
+          :lilith [:command-queue :event-store]}))))
